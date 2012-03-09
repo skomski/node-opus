@@ -1,0 +1,25 @@
+{
+  "author": "Karl Skomski <karl@skomski.com> (http://skomski.com)",
+  "name": "queue",
+  "description": "Extensible redis queue for Node.js",
+  "version": "0.0.0",
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/Skomski/node-queue.git"
+  },
+  "main": "index.js",
+  "scripts": {
+    "test": "node test/run.js"
+  },
+  "dependencies": {
+    "redis": "0.7.1",
+    "hiredis": "0.1.14"
+  },
+  "devDependencies": {
+    "coffee-script": "~1.2.0"
+  },
+  "optionalDependencies": {},
+  "engines": {
+    "node": ">=0.6.12"
+  }
+}
