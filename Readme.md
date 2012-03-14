@@ -2,11 +2,7 @@
 
 Extensible redis queue for Node.js
 
-## Install
-
-```
-npm install queue
-```
+## WIP
 
 ## License
 
