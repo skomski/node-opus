@@ -1,13 +1,13 @@
-RedisChannel     = require './redis/Channel'
-{ EventEmitter } = require 'events'
+{ RedisChannel: Channel } = require 'reskit'
+{ EventEmitter }          = require 'events'
 
 class JobMessage
-  constructor: ({ @type, @data }) ->
+  constructor: ({ @type, @payload }) ->
 
   toJSON: () ->
     JSON.stringify {
       @type
-      @data
+      @payload
     }
 
 class JobChannel extends EventEmitter
@@ -30,16 +30,16 @@ class JobChannel extends EventEmitter
 
     switch message.type
       when 'progress'
-        @emit 'progress', message.data
+        @emit 'progress', message.payload
       when 'log'
-        @emit 'log', message.data
+        @emit 'log', message.payload
       when 'result'
-        @emit 'result', message.data
+        @emit 'result', message.payload
 
   progress: ({ completed, total, description }, cb) ->
     message = new JobMessage
       type : 'progress'
-      data : {
+      payload : {
         completed
         total
         description
@@ -55,7 +55,7 @@ class JobChannel extends EventEmitter
   log: ({ message }, cb) ->
     message = new JobMessage
       type : 'log'
-      data : {
+      payload : {
         message
       }
 
@@ -66,10 +66,10 @@ class JobChannel extends EventEmitter
 
     @channel.publish json, cb
 
-  result: (data, cb) ->
+  result: ({ payload }, cb) ->
     message = new JobMessage
       type : 'result'
-      data : data
+      payload : payload
 
     try
       json = message.toJSON()

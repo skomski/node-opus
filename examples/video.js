@@ -1,16 +1,12 @@
-var queue = require('..');
+var Queue = require('..');
 
-var videoQueue = queue('video', {
-  redisHost: '127.0.0.1',
-  redisPort: '6379',
-  redisMaxClients: 10
+var videoQueue = new Queue('video', {
+  host: '127.0.0.1',
+  port: 6379
 });
 
 videoQueue.enqueue({
-  data: {
-    'ddd': 'dd'
-  },
-  priority: 1
+  'ddd': 'dd'
 }, function(err, job) {
   if (err) throw err;
 
@@ -19,8 +15,9 @@ videoQueue.enqueue({
   });
 });
 
-videoQueue.process({ priority: 1 }, function(err, job, done) {
+videoQueue.process(function(err, job, done) {
   if (err) throw err;
+
   done(null, {
     status: 200
   });

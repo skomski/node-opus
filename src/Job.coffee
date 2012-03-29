@@ -1,10 +1,10 @@
 class Job
   module.exports = Job
 
-  constructor: ({ @uuid, @data }) ->
+  constructor: ({ @id, @data }) ->
 
   toJSON: () ->
     JSON.stringify {
-      @uuid
+      @id
       @data
     }
