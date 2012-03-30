@@ -16,20 +16,19 @@ class Opus
     @prefix ?= ''
     @queueName = "#{@prefix}:#{@name}:"
 
+    @id = Uuid.v4()
+    @workerQueueName = "#{@prefix}:#{@id}:jobs"
+
     @pool = new Redis.Pool
       host : @host
       port : @port
       maxClients : @maxClients
 
-    @queue = new Redis.Queue
-      name : @queueName
-      pool : @pool
-
   close: () ->
     @pool.quit()
 
   pop: (cb) ->
-    @queue.pop (err, id) =>
+    @pool.blocker().brpoplpush @queueName, @workerQueueName, (err, id) =>
       return cb err if err
 
       job = new Redis.Hash
@@ -38,6 +37,7 @@ class Opus
 
       job.all (err, values) ->
         return cb err if err
+        return cb null, values
 
   push: ({ payload }, cb) ->
     try
@@ -59,5 +59,5 @@ class Opus
     }, (err) =>
       return cb err if err
 
-      @queue.push id, (err) ->
+      @pool.client().lpush @queueName, id, (err) ->
         return cb err, id
