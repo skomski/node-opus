@@ -8,21 +8,21 @@ testFinished = false
 redisClient = redis.createClient()
 
 producer = opus.createProducer
-  name: 'sendEmail'
+  queue: 'sendEmail'
   port: common.redis.port
   host: common.redis.host
 
+producer.on 'error', (err) ->
+  assert.ifError err
 
 producer.start()
 
-producer.push
+producer.add
   payload:
     frames: 200
     quality: 10
     author: 'NonY'
-  , (err, id) ->
-    assert.ifError err
-
+  , (id) ->
     redisClient.hgetall id, (err, job) ->
       assert.ifError err
 

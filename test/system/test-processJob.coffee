@@ -7,35 +7,48 @@ testFinished = false
 redisClient = redis.createClient()
 
 producer = opus.createProducer
-  name: 'sendWelcomeEmail'
+  queue: 'sendWelcomeEmail'
   port: common.redis.port
   host: common.redis.host
 
-consumer = opus.createConsumer
-  name: 'sendWelcomeEmail'
-  port: common.redis.port
-  host: common.redis.host
-
-producer.start()
-consumer.start()
-
-consumer.pop (err, payload) ->
+producer.on 'error', (err) ->
   assert.ifError err
 
-  assert.equal payload.frames, 200
+producer.on 'result', (job) ->
+  assert.equal job.result.status, 200
 
   consumer.stop()
   producer.stop()
   redisClient.quit()
   testFinished = true
 
-producer.push
+producer.start()
+
+consumer = opus.createConsumer
+  queue: 'sendWelcomeEmail'
+  port: common.redis.port
+  host: common.redis.host
+
+consumer.on 'error', (err) ->
+  assert.ifError err
+
+consumer.on 'drain', () ->
+
+consumer.start()
+
+consumer.process (payload, done) ->
+  assert.equal payload.frames, 200
+
+  done {
+    status: 200
+  }
+
+producer.add
   payload:
     frames  : 200
     quality : 10
     author  : 'NonY'
-  , (err, id) ->
-    assert.ifError err
+  , (id) ->
 
 process.on 'exit', () ->
   assert.equal testFinished, true
