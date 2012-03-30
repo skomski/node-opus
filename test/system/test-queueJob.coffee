@@ -10,8 +10,8 @@ redisClient = redis.createClient()
 opus = new Opus
   name   : 'tests'
   prefix : 'opusqueue'
-  port   : 6379
-  host   : '127.0.0.1'
+  port   : common.redis.port
+  host   : common.redis.host
   maxClients : 5
 
 opus.push
