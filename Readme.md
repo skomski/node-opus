@@ -1,8 +1,8 @@
-# node-opus
+# node-opus [![Build Status](https://secure.travis-ci.org/Skomski/node-opus.png?branch=unstable)](http://travis-ci.org/Skomski/node-opus)
 
 Extensible redis queue for Node.js
 
-## WIP
+# WIP
 
 ## License
 
