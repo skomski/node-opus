@@ -17,11 +17,14 @@ producer.on 'error', (err) ->
 
 producer.start()
 
+payloadJson = JSON.stringify {
+  frames: 200,
+  quality: 10,
+  author: 'NonY'
+}
+
 producer.add
-  payload:
-    frames: 200
-    quality: 10
-    author: 'NonY'
+  payload: payloadJson
   , (id) ->
     redisClient.hgetall id, (err, job) ->
       assert.ifError err

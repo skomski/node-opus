@@ -9,30 +9,35 @@ class Producer extends EventEmitter
     @id = uuid.v4()
 
   start: () ->
-    @redisBlocker    = redis.createClient(@port, @host)
-    @redisSubscriber = redis.createClient(@port, @host)
-    @redisClient     = redis.createClient(@port, @host)
+    @redisBlocker    = redis.createClient(@port, @host, {
+      return_buffers: true
+    })
+    @redisSubscriber = redis.createClient(@port, @host, {
+      return_buffers: true
+    })
+    @redisClient     = redis.createClient(@port, @host, {
+      return_buffers: true
+    })
 
+    @_listenResult()
+
+  _listenResult: () ->
     @redisBlocker.brpop @resultQueue, 0, (err, results) =>
       return @emit 'error', err if err
 
       id = results[1]
 
-      @redisClient.hgetall id, (err, values) =>
+      @redisClient.hget id, 'result', (err, value) =>
         return @emit 'error', err if err
 
-        try
-          payloadJson = JSON.parse values.payload
-          resultJson  = JSON.parse values.result
-        catch error
-          return @emit 'error', error
-
         job =
-          payload: payloadJson
-          result:  resultJson
-          id: values.id
+          result: value
+          id: id
 
-        return @emit 'result', job
+        @redisClient.del id, (err, value) =>
+          return @emit 'error', err if err
+          @_listenResult()
+          @emit 'result', job
 
   stop: () ->
     @redisBlocker.end()
@@ -40,15 +45,10 @@ class Producer extends EventEmitter
     @redisSubscriber.quit()
 
   add: ({ payload }, cb) ->
-    try
-      payloadJson = JSON.stringify payload
-    catch error
-      return cb error
-
     id = "job:#{@queue}:#{uuid.v4()}"
 
     @redisClient.hmset id, {
-      payload: payloadJson
+      payload: payload
       id: id
       queue: @queue
     }, (err) =>

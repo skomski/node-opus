@@ -7,11 +7,26 @@ class Consumer extends EventEmitter
 
   constructor: ({ @queue, @resultQueue, @port, @host }) ->
     @id            = uuid.v4()
-    @consumerQueue = "#{@queue}:#{@id}:jobs"
+    @consumerQueue = "consumer:#{@queue}:#{@id}:jobs"
 
   start: () ->
-    @redisBlocker = redis.createClient(@port, @host)
-    @redisClient  = redis.createClient(@port, @host)
+    @redisBlocker = redis.createClient(@port, @host, {
+      return_buffers: true
+    })
+    @redisClient  = redis.createClient(@port, @host, {
+      return_buffers: true
+    })
+
+    @_processJob()
+
+  _processJob: () ->
+    @redisBlocker.brpoplpush @queue, @consumerQueue, 0, (err, id) =>
+      return @_emitError err if err
+
+      @redisClient.hgetall id, (err, values) =>
+        return @emit 'error', err if err
+
+        @jobHandler values.payload, @_doneFunction.bind(this, values)
 
   stop: () ->
     @redisClient.del @consumerQueue, (err) =>
@@ -20,32 +35,19 @@ class Consumer extends EventEmitter
       @redisBlocker.end()
       @redisClient.quit()
 
+  setJobHandler: (jobHandler) ->
+    if jobHandler?
+      @jobHandler = jobHandler
+    else
+      throw new Error('You need to specify a jobHandler')
+
   _doneFunction: (values, result) ->
     @redisClient.lrem @consumerQueue, 0, values.id, (err) =>
       return @emit 'error', err if err
 
-      try
-        resultJson = JSON.stringify result
-      catch error
-        return @emit 'error', error
-
-      @redisClient.hmset values.id, 'result', resultJson, (err) =>
+      @redisClient.hmset values.id, 'result', result, (err) =>
         return @emit 'error', err if err
 
         @redisClient.lpush @resultQueue, values.id, (err) =>
           return @emit 'error', err if err
-          @emit 'drain'
-
-  process: (cb) ->
-    @redisBlocker.brpoplpush @queue, @consumerQueue, 0, (err, id) =>
-      return @_emitError err if err
-
-      @redisClient.hgetall id, (err, values) =>
-        return @emit 'error', err if err
-
-        try
-          payloadJson = JSON.parse values.payload
-        catch error
-          return cb error
-
-        return cb payloadJson, @_doneFunction.bind(this, values)
+          @_processJob()

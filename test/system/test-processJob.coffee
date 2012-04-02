@@ -15,7 +15,8 @@ producer.on 'error', (err) ->
   assert.ifError err
 
 producer.on 'result', (job) ->
-  assert.equal job.result.status, 200
+  result = JSON.parse(job.result)
+  assert.equal result.status, 200
 
   consumer.stop()
   producer.stop()
@@ -32,23 +33,26 @@ consumer = opus.createConsumer
 consumer.on 'error', (err) ->
   assert.ifError err
 
-consumer.on 'drain', () ->
-
 consumer.start()
 
-consumer.process (payload, done) ->
+consumer.setJobHandler (payload, done) ->
+  payload = JSON.parse(payload)
   assert.equal payload.frames, 200
 
-  done {
+  result = JSON.stringify {
     status: 200
   }
 
+  done result
+
+payloadJson = JSON.stringify {
+  frames: 200
+}
+
 producer.add
-  payload:
-    frames  : 200
-    quality : 10
-    author  : 'NonY'
+  payload: payloadJson
   , (id) ->
+    console.log(id)
 
 process.on 'exit', () ->
   assert.equal testFinished, true
