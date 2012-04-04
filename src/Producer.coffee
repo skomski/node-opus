@@ -7,6 +7,7 @@ class Producer extends EventEmitter
 
   constructor: ({ @queue, @resultQueue, @port, @host }) ->
     @id = uuid.v4()
+    @resultQueue   = "producer:#{@id}:#{@queue}:results"
 
   start: () ->
     @redisBlocker    = redis.createClient(@port, @host, {
@@ -30,14 +31,10 @@ class Producer extends EventEmitter
       @redisClient.hget id, 'result', (err, value) =>
         return @emit 'error', err if err
 
-        job =
-          result: value
-          id: id
-
-        @redisClient.del id, (err, value) =>
+        @redisClient.del id, (err) =>
           return @emit 'error', err if err
           @_listenResult()
-          @emit 'result', job
+          @emit 'result', id, value
 
   stop: () ->
     @redisBlocker.end()
@@ -51,6 +48,7 @@ class Producer extends EventEmitter
       payload: payload
       id: id
       queue: @queue
+      resultQueue: @resultQueue
     }, (err) =>
       return cb err if err
 

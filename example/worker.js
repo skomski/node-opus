@@ -1,18 +1,15 @@
 var opus   = require('..');
-var snappy = require('snappy');
 
-var snappyConsumer = opus.createConsumer({
-  queue: 'snappyCompress',
+var consumer = opus.createConsumer({
+  queue: 'add50',
   host: '127.0.0.1',
   port: 6379
 });
 
-var compressPath = function(payload, done) {
-  snappy.compress(new Buffer(payload), function(err, compressed) {
-    if (err) return done(err);
-    done(compressed);
-  });
+var add50 = function(payload, done) {
+  var first = parseInt(payload, 10);
+  done(first + 50);
 }
 
-snappyConsumer.setJobHandler(compressPath);
-snappyConsumer.start();
+consumer.setJobHandler(add50);
+consumer.start();

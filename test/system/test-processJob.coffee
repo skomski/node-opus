@@ -14,8 +14,8 @@ producer = opus.createProducer
 producer.on 'error', (err) ->
   assert.ifError err
 
-producer.on 'result', (job) ->
-  result = JSON.parse(job.result)
+producer.on 'result', (id, result) ->
+  result = JSON.parse(result)
   assert.equal result.status, 200
 
   consumer.stop()

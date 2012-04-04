@@ -48,6 +48,6 @@ class Consumer extends EventEmitter
       @redisClient.hmset values.id, 'result', result, (err) =>
         return @emit 'error', err if err
 
-        @redisClient.lpush @resultQueue, values.id, (err) =>
+        @redisClient.lpush values.resultQueue, values.id, (err) =>
           return @emit 'error', err if err
           @_processJob()

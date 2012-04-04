@@ -1,27 +1,22 @@
 var opus   = require('..');
-var snappy = require('snappy');
 var fs     = require('fs');
 
 var snappyProducer = opus.createProducer({
-  queue: 'snappyCompress',
+  queue: 'add50',
   host: '127.0.0.1',
   port: 6379
 });
 
 var counter = 0;
 
-snappyProducer.on('result', function(job) {
-  snappy.decompress(job.result, function(err, decompressed) {
-    if (err) throw err;
-    console.log(++counter);
-  });
+snappyProducer.on('result', function(id, result) {
+  console.log(+result)
+  if (parseInt(result, 10) !== 150) throw new Error('Wrong result: ' + result);
 });
 
 snappyProducer.start();
 
-var payload = fs.readFileSync('/home/skomski/Code/node-snappy/test/test.js')
-
 setInterval(function() {
-  snappyProducer.add({ payload: payload }, function(id) {
+  snappyProducer.add({ payload: 100 }, function(id) {
   });
 }, 100);
